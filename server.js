@@ -3,16 +3,11 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { exec } = require('child_process');
-const { promisify } = require('util');
+const youtubedl = require('youtube-dl-exec');
 
-const execAsync = promisify(exec);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-let ytDlpPath = os.platform() === 'win32' 
-  ? path.join(__dirname, 'yt-dlp.exe') 
-  : path.join(__dirname, 'yt-dlp');
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
 
@@ -28,8 +23,7 @@ app.get('/api/video-info', async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    const { stdout } = await execAsync(`"${ytDlpPath}" -J "${url}"`);
-    const info = JSON.parse(stdout);
+    const info = await youtubedl(url, { dumpSingleJson: true });
     
     const formats = {
       mp4: [],
@@ -116,8 +110,7 @@ app.get('/api/download', async (req, res) => {
       return res.status(400).json({ error: 'Missing parameters' });
     }
     
-    const { stdout: infoStdout } = await execAsync(`"${ytDlpPath}" -J "${url}"`);
-    const info = JSON.parse(infoStdout);
+    const info = await youtubedl(url, { dumpSingleJson: true });
     
     let formatId;
     let outputExt;
@@ -159,7 +152,7 @@ app.get('/api/download', async (req, res) => {
     const safeTitle = info.title.replace(/[^\w\s]/gi, '').substring(0, 50);
     const outputPath = path.join(tempDir, `${safeTitle}.${outputExt}`);
     
-    await execAsync(`"${ytDlpPath}" -f ${formatId} -o "${outputPath}" "${url}"`);
+    await youtubedl(url, { format: formatId, output: outputPath });
     
     res.download(outputPath, `${safeTitle}.${outputExt}`, (err) => {
       if (fs.existsSync(outputPath)) {
