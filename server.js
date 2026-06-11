@@ -3,27 +3,55 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const { execFile } = require('child_process');
+const { exec } = require('child_process');
 const { promisify } = require('util');
-const execFileAsync = promisify(execFile);
+const https = require('https');
 
+const execAsync = promisify(exec);
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-// Find yt-dlp - works on both Windows and Linux
-let ytDlpPath = 'yt-dlp';
-if (os.platform() === 'win32') {
-  const localPath = path.join(__dirname, 'yt-dlp.exe');
-  if (fs.existsSync(localPath)) {
-    ytDlpPath = localPath;
-  }
-}
 
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
 
+// Helper to download yt-dlp on Render (Linux)
+async function ensureYtDlp() {
+  const tempDir = os.tmpdir();
+  const ytDlpPath = os.platform() === 'win32' 
+    ? path.join(__dirname, 'yt-dlp.exe')
+    : path.join(tempDir, 'yt-dlp');
+    
+  if (fs.existsSync(ytDlpPath)) {
+    return ytDlpPath;
+  }
+  
+  if (os.platform() !== 'win32') {
+    // Download yt-dlp on Linux
+    console.log('Downloading yt-dlp...');
+    const downloadUrl = 'https://github.com/yt-dlp.github.io/yt-dlp/latest/download/yt-dlp';
+    const file = fs.createWriteStream(ytDlpPath);
+    
+    return new Promise((resolve, reject) => {
+      https.get(downloadUrl, (response) => {
+        response.pipe(file);
+        file.on('finish', () => {
+          file.close();
+          fs.chmodSync(ytDlpPath, '755', (err) => {
+            if (err) reject(err);
+            else resolve(ytDlpPath);
+          });
+        });
+      }).on('error', (err) => {
+        fs.unlink(ytDlpPath, () => reject(err));
+      });
+    };
+  }
+  
+  return 'yt-dlp';
+}
+
 // Test route
-app.get('/api/test', (req, res) => {
+app.get('/api/test', async (req, res) => {
   res.json({ message: 'Server is working!', platform: os.platform() });
 });
 
@@ -36,9 +64,12 @@ app.get('/api/video-info', async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
+    const ytDlp = await ensureYtDlp();
+    console.log('Using yt-dlp at:', ytDlp);
+    
     // Use yt-dlp to get video info
     console.log('Running yt-dlp info...');
-    const { stdout } = await execFileAsync(ytDlpPath, ['-J', url]);
+    const { stdout } = await execAsync(`"${ytDlp}" -J "${url}"`);
     const info = JSON.parse(stdout);
     console.log('Got video info successfully');
     
@@ -125,7 +156,7 @@ app.get('/api/video-info', async (req, res) => {
     console.error('Error message:', error.message);
     res.status(500).json({ 
       error: 'Failed to get video info',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -139,9 +170,11 @@ app.get('/api/download', async (req, res) => {
       return res.status(400).json({ error: 'Missing parameters' });
     }
     
+    const ytDlp = await ensureYtDlp();
+    
     // First get video info to find the right format id
     console.log('Getting video info for download...');
-    const { stdout: infoStdout } = await execFileAsync(ytDlpPath, ['-J', url]);
+    const { stdout: infoStdout } = await execAsync(`"${ytDlp}" -J "${url}"`);
     const info = JSON.parse(infoStdout);
     console.log('Got video info, finding format...');
     
@@ -209,11 +242,7 @@ app.get('/api/download', async (req, res) => {
     
     // Download with yt-dlp - SIMPLE!
     console.log('Starting download...');
-    await execFileAsync(ytDlpPath, [
-      '-f', formatId,
-      '-o', outputPath,
-      url
-    ]);
+    await execAsync(`"${ytDlp}" -f ${formatId} -o "${outputPath}" "${url}"`);
     console.log('Download completed!');
     
     // Check if file exists
@@ -245,7 +274,7 @@ app.get('/api/download', async (req, res) => {
     console.error('Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Failed to download video',
-      details: error.message 
+      details: error.message
     });
   }
 });
