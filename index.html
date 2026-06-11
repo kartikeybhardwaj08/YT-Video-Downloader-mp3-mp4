@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Video Downloader</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fab fa-youtube"></i>
+                <h1>YouTube Downloader</h1>
+            </div>
+        </header>
+
+        <main class="main">
+            <div class="input-section">
+                <div class="input-wrapper">
+                    <i class="fas fa-link"></i>
+                    <input 
+                        type="text" 
+                        id="video-url" 
+                        placeholder="Paste YouTube video URL here..."
+                    >
+                    <button id="search-btn" class="search-btn">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </div>
+
+            <div id="video-info" class="video-info hidden">
+                <div class="video-thumbnail">
+                    <img id="thumbnail" src="" alt="Video Thumbnail">
+                </div>
+                <div class="video-details">
+                    <h2 id="video-title">Video Title</h2>
+                    <p id="video-channel">Channel Name</p>
+                    <div class="video-stats">
+                        <span id="video-views"><i class="fas fa-eye"></i> 0 views</span>
+                        <span id="video-duration"><i class="fas fa-clock"></i> 0:00</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="download-options" class="download-options hidden">
+                <div class="format-tabs">
+                    <button class="tab-btn active" data-format="mp4">
+                        <i class="fas fa-video"></i> MP4
+                    </button>
+                    <button class="tab-btn" data-format="mp3">
+                        <i class="fas fa-music"></i> MP3
+                    </button>
+                </div>
+                
+                <div class="quality-list" id="mp4-qualities">
+                    <div class="quality-item">
+                        <span class="quality-label">1080p (HD)</span>
+                        <span class="quality-size">~100MB</span>
+                        <button class="download-btn" data-quality="1080p">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="quality-item">
+                        <span class="quality-label">720p</span>
+                        <span class="quality-size">~50MB</span>
+                        <button class="download-btn" data-quality="720p">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="quality-item">
+                        <span class="quality-label">480p</span>
+                        <span class="quality-size">~30MB</span>
+                        <button class="download-btn" data-quality="480p">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="quality-item">
+                        <span class="quality-label">360p</span>
+                        <span class="quality-size">~20MB</span>
+                        <button class="download-btn" data-quality="360p">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+
+                <div class="quality-list hidden" id="mp3-qualities">
+                    <div class="quality-item">
+                        <span class="quality-label">320kbps (High)</span>
+                        <span class="quality-size">~10MB</span>
+                        <button class="download-btn" data-quality="320kbps">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="quality-item">
+                        <span class="quality-label">256kbps</span>
+                        <span class="quality-size">~8MB</span>
+                        <button class="download-btn" data-quality="256kbps">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="quality-item">
+                        <span class="quality-label">192kbps</span>
+                        <span class="quality-size">~6MB</span>
+                        <button class="download-btn" data-quality="192kbps">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                    <div class="quality-item">
+                        <span class="quality-label">128kbps</span>
+                        <span class="quality-size">~4MB</span>
+                        <button class="download-btn" data-quality="128kbps">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="download-progress" class="download-progress hidden">
+                <div class="progress-header">
+                    <h3><i class="fas fa-download"></i> Downloading...</h3>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+                <div class="progress-stats">
+                    <span id="progress-percent">0%</span>
+                    <span id="progress-speed">0 KB/s</span>
+                    <span id="progress-eta">ETA: --:--</span>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 YouTube Downloader. For educational purposes only.</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
