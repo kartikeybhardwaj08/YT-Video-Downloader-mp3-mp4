@@ -23,7 +23,12 @@ app.get('/api/video-info', async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    const info = await youtubedl(url, { dumpSingleJson: true });
+    const info = await youtubedl(url, {
+      dumpSingleJson: true,
+      noWarnings: true,
+      noPlaylist: true,
+      formatSort: '+size'
+    });
     
     const formats = {
       mp4: [],
@@ -110,7 +115,11 @@ app.get('/api/download', async (req, res) => {
       return res.status(400).json({ error: 'Missing parameters' });
     }
     
-    const info = await youtubedl(url, { dumpSingleJson: true });
+    const info = await youtubedl(url, {
+      dumpSingleJson: true,
+      noWarnings: true,
+      noPlaylist: true
+    });
     
     let formatId;
     let outputExt;
@@ -152,7 +161,11 @@ app.get('/api/download', async (req, res) => {
     const safeTitle = info.title.replace(/[^\w\s]/gi, '').substring(0, 50);
     const outputPath = path.join(tempDir, `${safeTitle}.${outputExt}`);
     
-    await youtubedl(url, { format: formatId, output: outputPath });
+    await youtubedl(url, {
+      format: formatId,
+      output: outputPath,
+      noWarnings: true
+    });
     
     res.download(outputPath, `${safeTitle}.${outputExt}`, (err) => {
       if (fs.existsSync(outputPath)) {
