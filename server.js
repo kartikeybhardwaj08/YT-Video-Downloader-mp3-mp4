@@ -3,10 +3,14 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
-const youtubedl = require('youtube-dl-exec');
+const { exec } = require('child_process');
+const { promisify } = require('util');
 
+const execAsync = promisify(exec);
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+const ytDlpPath = os.platform() === 'win32' ? path.join(__dirname, 'yt-dlp.exe') : 'yt-dlp';
 
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
@@ -23,12 +27,8 @@ app.get('/api/video-info', async (req, res) => {
       return res.status(400).json({ error: 'URL is required' });
     }
     
-    const info = await youtubedl(url, {
-      dumpSingleJson: true,
-      noWarnings: true,
-      noPlaylist: true,
-      formatSort: '+size'
-    });
+    const { stdout } = await execAsync(`"${ytDlpPath}" --no-warnings --no-playlist --geo-bypass --extractor-args "youtube:player_client=android,ios" --dump-json "${url}"`);
+    const info = JSON.parse(stdout);
     
     const formats = {
       mp4: [],
@@ -115,11 +115,8 @@ app.get('/api/download', async (req, res) => {
       return res.status(400).json({ error: 'Missing parameters' });
     }
     
-    const info = await youtubedl(url, {
-      dumpSingleJson: true,
-      noWarnings: true,
-      noPlaylist: true
-    });
+    const { stdout: infoStdout } = await execAsync(`"${ytDlpPath}" --no-warnings --no-playlist --geo-bypass --dump-json "${url}"`);
+    const info = JSON.parse(infoStdout);
     
     let formatId;
     let outputExt;
@@ -161,11 +158,7 @@ app.get('/api/download', async (req, res) => {
     const safeTitle = info.title.replace(/[^\w\s]/gi, '').substring(0, 50);
     const outputPath = path.join(tempDir, `${safeTitle}.${outputExt}`);
     
-    await youtubedl(url, {
-      format: formatId,
-      output: outputPath,
-      noWarnings: true
-    });
+    await execAsync(`"${ytDlpPath}" --no-warnings --geo-bypass -f ${formatId} -o "${outputPath}" "${url}"`);
     
     res.download(outputPath, `${safeTitle}.${outputExt}`, (err) => {
       if (fs.existsSync(outputPath)) {
