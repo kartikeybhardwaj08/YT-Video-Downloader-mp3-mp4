@@ -10,8 +10,9 @@ const execAsync = promisify(exec);
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-let ytDlpPath = os.platform() === 'win32' ? path.join(__dirname, 'yt-dlp.exe') : 'yt-dlp';
-
+let ytDlpPath = os.platform() === 'win32' 
+  ? path.join(__dirname, 'yt-dlp.exe') 
+  : path.join(__dirname, 'yt-dlp');
 app.use(cors());
 app.use(express.static(path.join(__dirname)));
 
